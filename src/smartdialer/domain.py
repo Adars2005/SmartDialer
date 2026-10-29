@@ -1,0 +1,47 @@
+"""Core state definitions and allowed lifecycle transitions."""
+from enum import StrEnum
+
+
+class AgentState(StrEnum):
+    OFFLINE = "OFFLINE"
+    AVAILABLE = "AVAILABLE"
+    RESERVED = "RESERVED"
+    DIALING = "DIALING"
+    CONNECTED = "CONNECTED"
+    WRAP_UP = "WRAP_UP"
+    PAUSED = "PAUSED"
+
+
+class CallState(StrEnum):
+    QUEUED = "QUEUED"
+    RESERVED = "RESERVED"
+    INITIATED = "INITIATED"
+    RINGING = "RINGING"
+    ANSWERED = "ANSWERED"
+    CONNECTED = "CONNECTED"
+    RECONCILING = "RECONCILING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+AGENT_TRANSITIONS = {
+    "OFFLINE": {"AVAILABLE"}, "AVAILABLE": {"OFFLINE", "PAUSED", "RESERVED"},
+    "PAUSED": {"AVAILABLE", "OFFLINE"}, "RESERVED": {"DIALING", "AVAILABLE", "OFFLINE"},
+    "DIALING": {"CONNECTED", "AVAILABLE", "WRAP_UP", "OFFLINE"},
+    "CONNECTED": {"WRAP_UP", "OFFLINE"}, "WRAP_UP": {"AVAILABLE", "OFFLINE"},
+}
+CALL_TRANSITIONS = {
+    "QUEUED": {"RESERVED", "CANCELLED"}, "RESERVED": {"INITIATED", "FAILED", "CANCELLED"},
+    "INITIATED": {"RINGING", "ANSWERED", "CONNECTED", "COMPLETED", "FAILED", "CANCELLED"},
+    "RINGING": {"ANSWERED", "CONNECTED", "COMPLETED", "FAILED", "CANCELLED"},
+    "ANSWERED": {"CONNECTED", "COMPLETED", "FAILED"}, "CONNECTED": {"COMPLETED", "FAILED"},
+    "RECONCILING": {"RINGING", "ANSWERED", "CONNECTED", "COMPLETED", "FAILED", "CANCELLED"},
+    "COMPLETED": set(), "FAILED": set(), "CANCELLED": set(),
+}
+TERMINAL_CALL_STATES = {"COMPLETED", "FAILED", "CANCELLED"}
+
+
+def valid_call_transition(current: str, target: str) -> bool:
+    return current == target or target in CALL_TRANSITIONS.get(current, set())
+

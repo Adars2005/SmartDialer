@@ -1,0 +1,2 @@
+"""Safety-first SmartDialer prototype."""
+
